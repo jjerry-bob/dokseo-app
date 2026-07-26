@@ -118,6 +118,8 @@
         <option>인문학</option>
         <option>소설</option>
         <option>BL</option>
+        <option>현로</option>
+        <option>로판</option>
         <option>경제</option>
         <option>자기계발</option>
         <option>과학</option>
@@ -235,6 +237,21 @@
   <section class="card settings-card">
     <div class="settings-row"><span>앱 정보</span><span class="row-sub">독서기록장 v1.0.0</span></div>
     <div class="settings-row"><span>저장 공간 사용</span><span class="row-sub" id="storage-usage">-</span></div>
+  </section>
+</main>
+
+<!-- ========== 키워드 모아보기 화면 ========== -->
+<main id="screen-keyword" class="screen hidden">
+  <header class="app-header sub">
+    <button class="icon-btn" id="kw-back-btn" aria-label="뒤로">←</button>
+    <h1 id="kw-title">#키워드</h1>
+  </header>
+  <p class="kw-count" id="kw-count"></p>
+  <div id="kw-book-list"><!-- JS --></div>
+  <section class="card kw-related">
+    <h2 class="card-label">다른 키워드 모아보기</h2>
+    <div class="kw-cloud" id="kw-cloud"></div>
+    <p class="empty-note hidden" id="kw-cloud-empty">등록된 다른 키워드가 없습니다.</p>
   </section>
 </main>
 

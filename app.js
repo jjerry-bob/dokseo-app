@@ -101,9 +101,10 @@ function promptDlg(title, initial = "") {
 }
 
 /* ---------- 화면 전환 ---------- */
-const SCREENS = ["home", "list", "form", "detail", "stats", "settings"];
+const SCREENS = ["home", "list", "form", "detail", "stats", "settings", "keyword"];
 let currentScreen = "home";
 let detailBookId = null;
+let detailOrigin = "list";   // 상세 화면 진입 출처 (list | keyword)
 let editBookId = null;   // null이면 새 책 등록
 
 function show(name) {
@@ -405,6 +406,7 @@ $("#form-save-btn").addEventListener("click", () => {
       review: "",
       notes: [],
       quotes: [],
+      keywords: [],
       createdAt: new Date().toISOString()
     }, data);
     books.push(b);
@@ -417,6 +419,7 @@ $("#form-save-btn").addEventListener("click", () => {
 /* ---------- 상세 화면 ---------- */
 function openDetail(id) {
   detailBookId = id;
+  detailOrigin = (currentScreen === "keyword") ? "keyword" : "list";
   renderDetail();
   show("detail");
 }
@@ -446,6 +449,15 @@ function renderDetail() {
         <div><span class="k">완독일</span><span class="v">${fmtDate(b.finishDate)}</span></div>
         ${days ? `<div><span class="k">독서 기간</span><span class="v">${days}일</span></div>` : ""}
       </div>
+    </section>
+
+    <section class="card">
+      <div class="detail-section-head">
+        <h2 class="card-label">키워드</h2>
+      </div>
+      <input type="text" class="keyword-input" id="d-kw-input"
+        placeholder="#키워드를 입력하세요 (예: #집착공 #무심수)" autocomplete="off" enterkeyhint="done">
+      <div class="keyword-chips" id="d-kw-chips"></div>
     </section>
 
     <section class="card">
@@ -491,6 +503,46 @@ function renderDetail() {
     });
     starWrap.appendChild(btn);
   }
+
+  // 키워드
+  const kwInput = $("#d-kw-input");
+  const kwChips = $("#d-kw-chips");
+  renderKwChips();
+  function renderKwChips() {
+    const kws = b.keywords || [];
+    kwChips.innerHTML = kws.map((k, i) => `
+      <button type="button" class="kw-chip" data-kwi="${i}">#${esc(k)}
+        <span class="x" data-kwdel="${i}" role="button" aria-label="${esc(k)} 삭제">✕</span>
+      </button>`).join("");
+    kwChips.querySelectorAll(".kw-chip").forEach(chip => {
+      chip.addEventListener("click", e => {
+        const delEl = e.target.closest("[data-kwdel]");
+        if (delEl) {
+          const i = Number(delEl.dataset.kwdel);
+          b.keywords.splice(i, 1);
+          saveBooks(); toast("키워드가 삭제되었습니다."); renderKwChips();
+          return;
+        }
+        openKeyword(b.keywords[Number(chip.dataset.kwi)]);
+      });
+    });
+  }
+  function commitKeywords() {
+    const parsed = parseKeywords(kwInput.value);
+    if (!parsed.length) return;
+    b.keywords = b.keywords || [];
+    let added = 0;
+    parsed.forEach(k => {
+      if (!b.keywords.includes(k)) { b.keywords.push(k); added++; }
+    });
+    kwInput.value = "";
+    if (added) { saveBooks(); toast("키워드가 추가되었습니다."); }
+    renderKwChips();
+  }
+  kwInput.addEventListener("keydown", e => {
+    if (e.key === "Enter") { e.preventDefault(); commitKeywords(); }
+  });
+  kwInput.addEventListener("blur", commitKeywords);
 
   // 한줄평
   $("#d-review-edit").addEventListener("click", async () => {
@@ -570,7 +622,69 @@ function readingDays(b) {
   return Math.round(ms / 86400000) + 1;
 }
 
-$("#detail-back-btn").addEventListener("click", () => show("list"));
+$("#detail-back-btn").addEventListener("click", () => {
+  show(detailOrigin === "keyword" ? "keyword" : "list");
+});
+
+/* ---------- 키워드 모아보기 ---------- */
+let currentKeyword = null;
+
+function parseKeywords(v) {
+  return String(v || "")
+    .split(/[#,\s]+/)
+    .map(s => s.trim())
+    .filter(Boolean);
+}
+
+function openKeyword(kw) {
+  currentKeyword = kw;
+  renderKeyword();
+  show("keyword");
+}
+
+function renderKeyword() {
+  const kw = currentKeyword;
+  $("#kw-title").textContent = "#" + kw;
+
+  const arr = books
+    .filter(b => (b.keywords || []).includes(kw))
+    .sort((a, b) => (b.createdAt || "").localeCompare(a.createdAt || ""));
+  $("#kw-count").innerHTML = `이 키워드가 등록된 책 <b>${arr.length}권</b>`;
+
+  const wrap = $("#kw-book-list");
+  if (arr.length === 0) {
+    wrap.innerHTML = `<p class="empty-note">이 키워드가 등록된 책이 없습니다.</p>`;
+  } else {
+    wrap.innerHTML = arr.map(b => bookCardHtml(b, { menu: false })).join("");
+    wrap.querySelectorAll(".book-card").forEach(el =>
+      el.addEventListener("click", () => openDetail(el.dataset.id)));
+  }
+
+  // 다른 키워드 모아보기 (개수순)
+  const counts = {};
+  books.forEach(b => (b.keywords || []).forEach(k => {
+    counts[k] = (counts[k] || 0) + 1;
+  }));
+  delete counts[kw];
+  const entries = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ko"));
+  const cloud = $("#kw-cloud");
+  $("#kw-cloud-empty").classList.toggle("hidden", entries.length > 0);
+  cloud.innerHTML = entries.map(([k, n]) =>
+    `<button type="button" class="kw-chip" data-kw="${esc(k)}">#${esc(k)} (${n})</button>`).join("");
+  cloud.querySelectorAll(".kw-chip").forEach(chip =>
+    chip.addEventListener("click", () => openKeyword(chip.dataset.kw)));
+}
+
+$("#kw-back-btn").addEventListener("click", () => {
+  if (detailBookId && books.find(x => x.id === detailBookId)) {
+    detailOrigin = "list";
+    renderDetail();
+    show("detail");
+  } else {
+    show("list");
+  }
+});
 
 /* ---------- 통계 화면 ---------- */
 const GENRE_COLORS = ["#3D6BAA", "#8FBF88", "#F0B449", "#C6CBD4", "#B07CC6", "#E08573", "#63B5B0", "#8A8F98"];
@@ -811,6 +925,7 @@ $("#import-input").addEventListener("change", e => {
       if (!b.id) b.id = uuid();
       b.notes = Array.isArray(b.notes) ? b.notes : [];
       b.quotes = Array.isArray(b.quotes) ? b.quotes : [];
+      b.keywords = Array.isArray(b.keywords) ? b.keywords : [];
       if (!b.createdAt) b.createdAt = new Date().toISOString();
       const idx = books.findIndex(x => x.id === b.id);
       if (idx >= 0) books[idx] = b; else books.push(b);

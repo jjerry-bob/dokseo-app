@@ -260,6 +260,27 @@ body.dark .quote-item::before, body.dark .quote-item .quote-text::after { color:
 .detail-btns { display: flex; gap: 12px; margin-top: 4px; }
 .detail-btns button { flex: 1; }
 
+/* ===== 키워드 ===== */
+.keyword-input {
+  border: 1px solid var(--border); border-radius: 10px; padding: 11px 12px;
+  background: var(--card); font-size: .93rem; width: 100%; min-height: 44px;
+  -webkit-appearance: none; appearance: none;
+}
+.keyword-input:focus { outline: 2px solid var(--navy); outline-offset: 0; border-color: var(--navy); }
+.keyword-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.kw-chip {
+  display: inline-flex; align-items: center; gap: 5px; padding: 6px 12px;
+  border-radius: 20px; background: var(--navy-soft); color: var(--navy);
+  font-size: .84rem; font-weight: 600;
+}
+body.dark .kw-chip { color: #9DBEE8; }
+.kw-chip:active { opacity: .8; }
+.kw-chip .x { color: var(--muted); font-weight: 400; font-size: .9rem; padding: 0 2px; }
+.kw-count { color: var(--muted); font-size: .9rem; margin: -6px 0 12px; }
+.kw-count b { color: var(--text); }
+.kw-related { margin-top: 4px; }
+.kw-cloud { display: flex; flex-wrap: wrap; gap: 8px; }
+
 /* ===== 통계 ===== */
 .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
 .stat-card {
