@@ -404,6 +404,7 @@ $("#form-save-btn").addEventListener("click", () => {
     const b = Object.assign({
       id: uuid(),
       review: "",
+      synopsis: "",
       notes: [],
       quotes: [],
       keywords: [],
@@ -458,6 +459,14 @@ function renderDetail() {
       <input type="text" class="keyword-input" id="d-kw-input"
         placeholder="#키워드를 입력하세요 (예: #집착공 #무심수)" autocomplete="off" enterkeyhint="done">
       <div class="keyword-chips" id="d-kw-chips"></div>
+    </section>
+
+    <section class="card">
+      <div class="detail-section-head">
+        <h2 class="card-label">줄거리</h2>
+        <button class="edit-icon" id="d-synopsis-edit" aria-label="줄거리 수정">✏️</button>
+      </div>
+      <p class="detail-text ${b.synopsis ? "" : "placeholder"}">${b.synopsis ? esc(b.synopsis) : "줄거리를 남겨보세요."}</p>
     </section>
 
     <section class="card">
@@ -543,6 +552,13 @@ function renderDetail() {
     if (e.key === "Enter") { e.preventDefault(); commitKeywords(); }
   });
   kwInput.addEventListener("blur", commitKeywords);
+
+  // 줄거리
+  $("#d-synopsis-edit").addEventListener("click", async () => {
+    const v = await promptDlg("줄거리", b.synopsis || "");
+    if (v === null) return;
+    b.synopsis = v; saveBooks(); toast("저장되었습니다."); renderDetail();
+  });
 
   // 한줄평
   $("#d-review-edit").addEventListener("click", async () => {
@@ -926,6 +942,7 @@ $("#import-input").addEventListener("change", e => {
       b.notes = Array.isArray(b.notes) ? b.notes : [];
       b.quotes = Array.isArray(b.quotes) ? b.quotes : [];
       b.keywords = Array.isArray(b.keywords) ? b.keywords : [];
+      if (typeof b.synopsis !== "string") b.synopsis = "";
       if (!b.createdAt) b.createdAt = new Date().toISOString();
       const idx = books.findIndex(x => x.id === b.id);
       if (idx >= 0) books[idx] = b; else books.push(b);
@@ -958,3 +975,7 @@ if ("serviceWorker" in navigator) {
 /* ---------- 초기화 ---------- */
 applyDark();
 show("home");
+
+
+
+
