@@ -541,7 +541,7 @@ function renderDetail() {
     qWrap.innerHTML = `<p class="empty-note">인상 깊은 문장을 기록해 보세요.</p>`;
   } else {
     qWrap.innerHTML = b.quotes.map((q, i) => `
-      <div class="quote-item">${esc(q.content)}
+      <div class="quote-item"><span class="quote-text">${esc(q.content)}</span>
         <div class="note-actions"><button class="del" data-qdel="${i}">삭제</button></div>
       </div>`).join("");
     qWrap.querySelectorAll("[data-qdel]").forEach(btn =>

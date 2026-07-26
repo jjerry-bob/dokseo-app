@@ -248,7 +248,8 @@ body.dark .info-table .v.navy { color: #7FA8DC; }
   font-size: .93rem; margin-bottom: 8px; position: relative;
 }
 .quote-item::before { content: "“"; color: var(--navy); font-size: 1.2rem; font-weight: 700; margin-right: 4px; }
-body.dark .quote-item::before { color: #7FA8DC; }
+.quote-item .quote-text::after { content: "”"; color: var(--navy); font-size: 1.2rem; font-weight: 700; margin-left: 4px; }
+body.dark .quote-item::before, body.dark .quote-item .quote-text::after { color: #7FA8DC; }
 .quote-item .note-actions { justify-content: flex-end; }
 .add-inline-btn {
   width: 100%; border: 1.5px dashed var(--border); border-radius: 10px;
