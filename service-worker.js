@@ -1,5 +1,5 @@
 /* ===== 독서기록장 service-worker.js ===== */
-const CACHE_NAME = "dokseo-cache-v1";
+const CACHE_NAME = "dokseo-cache-v2";
 const APP_SHELL = [
   "./",
   "./index.html",
@@ -31,24 +31,46 @@ self.addEventListener("activate", event => {
   );
 });
 
-// 요청: 캐시 우선, 없으면 네트워크 (받은 것은 캐시에 저장)
+// 요청 처리
+// - 핵심 앱 파일(html/js/css/json): 네트워크 우선 → 최신 버전을 항상 받아오고,
+//   오프라인일 때만 캐시로 대체 (예전 파일이 계속 남아 갱신 안 되는 문제 방지)
+// - 그 외 정적 자원(아이콘 등): 캐시 우선 → 빠르고 데이터 절약
 self.addEventListener("fetch", event => {
   if (event.request.method !== "GET") return;
-  event.respondWith(
-    caches.match(event.request, { ignoreSearch: true }).then(cached => {
-      if (cached) return cached;
-      return fetch(event.request)
+  const req = event.request;
+  const isAppShell = req.mode === "navigate" || /\.(html|js|css|json)(\?|$)/i.test(req.url);
+
+  if (isAppShell) {
+    event.respondWith(
+      fetch(req, { cache: "no-cache" })
         .then(res => {
-          if (res && res.ok && event.request.url.startsWith(self.location.origin)) {
+          if (res && res.ok) {
             const copy = res.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, copy));
+            caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
           }
           return res;
         })
-        .catch(() => {
-          // 오프라인 시 탐색 요청은 index.html로 대체
-          if (event.request.mode === "navigate") return caches.match("./index.html");
-        });
+        .catch(() =>
+          caches.match(req, { ignoreSearch: true }).then(cached =>
+            cached || (req.mode === "navigate" ? caches.match("./index.html") : undefined)
+          )
+        )
+    );
+    return;
+  }
+
+  event.respondWith(
+    caches.match(req, { ignoreSearch: true }).then(cached => {
+      if (cached) return cached;
+      return fetch(req)
+        .then(res => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() => undefined);
     })
   );
 });
