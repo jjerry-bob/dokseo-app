@@ -56,7 +56,7 @@ function todayStr() {
 function starHtml(n) {
   n = Number(n) || 0;
   let s = "";
-  for (let i = 1; i <= 5; i++) s += `<span class="${i <= n ? "" : "off"}">★</span>`;
+  for (let i = 1; i <= 5; i++) s += `<span class="${i <= n ? "" : "off"}">${i <= n ? "★\uFE0E" : "☆\uFE0E"}</span>`;
   return `<span class="stars">${s}</span>`;
 }
 
@@ -324,7 +324,7 @@ function renderFormStars() {
   for (let i = 1; i <= 5; i++) {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.textContent = "★";
+    btn.textContent = i <= formRating ? "★\uFE0E" : "☆\uFE0E";
     btn.className = i <= formRating ? "on" : "";
     btn.setAttribute("aria-label", i + "점");
     btn.addEventListener("click", () => {
@@ -482,7 +482,7 @@ function renderDetail() {
   const starWrap = $("#d-stars");
   for (let i = 1; i <= 5; i++) {
     const btn = document.createElement("button");
-    btn.textContent = "★";
+    btn.textContent = i <= (b.rating || 0) ? "★\uFE0E" : "☆\uFE0E";
     btn.className = i <= (b.rating || 0) ? "on" : "";
     btn.setAttribute("aria-label", i + "점");
     btn.addEventListener("click", () => {
