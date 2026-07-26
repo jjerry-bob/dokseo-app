@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1E3A5F">
+<meta name="description" content="개인용 독서기록 앱 - 오프라인에서 동작하며 모든 데이터는 내 기기에만 저장됩니다.">
+<title>독서기록장</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ========== 홈 화면 ========== -->
+<main id="screen-home" class="screen">
+  <header class="app-header">
+    <div class="app-title">
+      <span class="logo-book" aria-hidden="true">📖</span>
+      <h1>독서기록장</h1>
+    </div>
+  </header>
+  <p class="home-year-line" id="home-year-line">2026년 <b>0권</b> 완독</p>
+
+  <section class="card" id="home-reading-card">
+    <h2 class="card-label">현재 읽는 책</h2>
+    <div id="home-reading-body"><!-- JS --></div>
+  </section>
+
+  <div class="tile-row">
+    <button class="tile" id="tile-done" data-goto-filter="완독">
+      <span class="tile-label">완독</span>
+      <span class="tile-value" id="home-done-count">0권</span>
+    </button>
+    <button class="tile" id="tile-reading" data-goto-filter="읽는 중">
+      <span class="tile-label">읽는 중</span>
+      <span class="tile-value" id="home-reading-count">0권</span>
+    </button>
+  </div>
+
+  <section class="home-recent">
+    <div class="section-head">
+      <h2>최근 기록</h2>
+      <button class="link-btn" id="home-more-btn">더보기 ›</button>
+    </div>
+    <div id="home-recent-list"><!-- JS --></div>
+  </section>
+
+  <button class="primary-btn big" id="home-add-btn">＋ 책 추가</button>
+</main>
+
+<!-- ========== 책 목록 화면 ========== -->
+<main id="screen-list" class="screen hidden">
+  <header class="app-header">
+    <h1>책 목록</h1>
+  </header>
+  <div class="search-row">
+    <div class="search-box">
+      <span aria-hidden="true">🔍</span>
+      <input type="search" id="search-input" placeholder="책 제목, 저자 검색" autocomplete="off">
+    </div>
+  </div>
+  <div class="filter-chips" id="filter-chips">
+    <button class="chip active" data-filter="전체">전체</button>
+    <button class="chip" data-filter="읽을 예정">읽을 예정</button>
+    <button class="chip" data-filter="읽는 중">읽는 중</button>
+    <button class="chip" data-filter="완독">완독</button>
+    <button class="chip" data-filter="중단">중단</button>
+  </div>
+  <div class="sort-row">
+    <label for="sort-select" class="sort-label">정렬:</label>
+    <select id="sort-select">
+      <option value="recent">최근 등록순</option>
+      <option value="title">제목순</option>
+      <option value="rating">평점순</option>
+      <option value="finish">완독일순</option>
+    </select>
+  </div>
+  <div id="book-list"><!-- JS --></div>
+</main>
+
+<!-- ========== 책 등록/수정 화면 ========== -->
+<main id="screen-form" class="screen hidden">
+  <header class="app-header sub">
+    <button class="icon-btn" id="form-back-btn" aria-label="뒤로">←</button>
+    <h1 id="form-title">새 책 등록</h1>
+  </header>
+
+  <div class="form-body">
+    <div class="cover-upload">
+      <input type="file" id="cover-input" accept="image/*" hidden>
+      <button type="button" class="cover-box" id="cover-box" aria-label="표지 이미지 업로드">
+        <span id="cover-plus">＋</span>
+        <img id="cover-preview" class="hidden" alt="표지 미리보기">
+      </button>
+      <div class="cover-side">
+        <span class="cover-hint">표지 이미지</span>
+        <button type="button" class="link-btn danger hidden" id="cover-remove-btn">이미지 삭제</button>
+      </div>
+    </div>
+
+    <label class="field">
+      <span class="field-label">제목 <em>*</em></span>
+      <input type="text" id="f-title" placeholder="책 제목을 입력하세요" autocomplete="off">
+    </label>
+    <label class="field">
+      <span class="field-label">저자 <em>*</em></span>
+      <input type="text" id="f-author" placeholder="저자 이름을 입력하세요" autocomplete="off">
+    </label>
+    <label class="field">
+      <span class="field-label">출판사 (선택)</span>
+      <input type="text" id="f-publisher" placeholder="출판사를 입력하세요" autocomplete="off">
+    </label>
+    <label class="field">
+      <span class="field-label">장르</span>
+      <select id="f-genre">
+        <option>인문학</option>
+        <option>소설</option>
+        <option>경제</option>
+        <option>자기계발</option>
+        <option>과학</option>
+        <option>에세이</option>
+        <option>역사</option>
+        <option>기타</option>
+      </select>
+    </label>
+
+    <fieldset class="field">
+      <legend class="field-label">상태</legend>
+      <div class="radio-row" id="f-status">
+        <label><input type="radio" name="status" value="읽을 예정"><span>읽을 예정</span></label>
+        <label><input type="radio" name="status" value="읽는 중" checked><span>읽는 중</span></label>
+        <label><input type="radio" name="status" value="완독"><span>완독</span></label>
+        <label><input type="radio" name="status" value="중단"><span>중단</span></label>
+      </div>
+    </fieldset>
+
+    <label class="field">
+      <span class="field-label">시작일</span>
+      <input type="date" id="f-start">
+    </label>
+    <label class="field">
+      <span class="field-label">완독일 (선택)</span>
+      <input type="date" id="f-finish">
+    </label>
+
+    <div class="field" id="f-rating-wrap">
+      <span class="field-label">평점</span>
+      <div class="star-input" id="f-rating" role="radiogroup" aria-label="평점 선택"><!-- JS --></div>
+    </div>
+
+    <button class="primary-btn big" id="form-save-btn">저장</button>
+  </div>
+</main>
+
+<!-- ========== 책 상세 화면 ========== -->
+<main id="screen-detail" class="screen hidden">
+  <header class="app-header sub">
+    <button class="icon-btn" id="detail-back-btn" aria-label="뒤로">←</button>
+    <h1 id="detail-header-title">책 상세</h1>
+  </header>
+  <div id="detail-body"><!-- JS --></div>
+</main>
+
+<!-- ========== 통계 화면 ========== -->
+<main id="screen-stats" class="screen hidden">
+  <header class="app-header">
+    <h1>독서 통계</h1>
+    <select id="stats-year" class="year-select" aria-label="연도 선택"></select>
+  </header>
+
+  <div class="stat-grid">
+    <div class="stat-card"><span class="stat-icon">🕐</span><div><span class="stat-label">전체 등록 권수</span><b id="st-total">0권</b></div></div>
+    <div class="stat-card"><span class="stat-icon">✅</span><div><span class="stat-label">완독 권수</span><b id="st-done">0권</b></div></div>
+    <div class="stat-card"><span class="stat-icon">📄</span><div><span class="stat-label">읽는 중</span><b id="st-reading">0권</b></div></div>
+    <div class="stat-card"><span class="stat-icon">⭐</span><div><span class="stat-label">평균 평점</span><b id="st-avg">-</b></div></div>
+  </div>
+
+  <section class="card chart-card">
+    <h2 class="card-label" id="chart-month-title">월별 완독 권수</h2>
+    <canvas id="chart-month" height="180"></canvas>
+  </section>
+
+  <section class="card chart-card">
+    <h2 class="card-label">연도별 완독 권수</h2>
+    <canvas id="chart-year" height="180"></canvas>
+  </section>
+
+  <section class="card chart-card">
+    <h2 class="card-label">장르별 비율</h2>
+    <div class="donut-wrap">
+      <canvas id="chart-genre" width="180" height="180"></canvas>
+      <ul class="donut-legend" id="genre-legend"></ul>
+    </div>
+    <p class="empty-note hidden" id="genre-empty">등록된 책이 없습니다.</p>
+  </section>
+</main>
+
+<!-- ========== 설정 화면 ========== -->
+<main id="screen-settings" class="screen hidden">
+  <header class="app-header">
+    <h1>설정</h1>
+  </header>
+
+  <section class="card settings-card">
+    <div class="settings-row">
+      <span>다크 모드</span>
+      <label class="switch">
+        <input type="checkbox" id="dark-toggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+  </section>
+
+  <section class="card settings-card">
+    <h2 class="card-label">백업 및 복원</h2>
+    <button class="settings-row btn-row" id="export-btn">
+      <div><b>데이터 내보내기</b><span class="row-sub">JSON 파일로 내보내기</span></div>
+      <span aria-hidden="true">⬆️</span>
+    </button>
+    <button class="settings-row btn-row" id="import-btn">
+      <div><b>데이터 가져오기</b><span class="row-sub">JSON 파일 불러오기</span></div>
+      <span aria-hidden="true">⬇️</span>
+    </button>
+    <input type="file" id="import-input" accept=".json,application/json" hidden>
+    <p class="row-note">* 모든 데이터는 이 기기에만 저장됩니다. 휴대폰 교체 시 내보내기 파일로 이전하세요.</p>
+  </section>
+
+  <section class="card settings-card">
+    <button class="settings-row btn-row danger-text" id="reset-btn"><b>데이터 초기화</b><span aria-hidden="true">🗑</span></button>
+  </section>
+
+  <section class="card settings-card">
+    <div class="settings-row"><span>앱 정보</span><span class="row-sub">독서기록장 v1.0.0</span></div>
+    <div class="settings-row"><span>저장 공간 사용</span><span class="row-sub" id="storage-usage">-</span></div>
+  </section>
+</main>
+
+<!-- ========== 하단 네비게이션 ========== -->
+<nav class="bottom-nav" aria-label="주요 메뉴">
+  <button class="nav-item active" data-screen="home"><span class="nav-icon">🏠</span><span>홈</span></button>
+  <button class="nav-item" data-screen="list"><span class="nav-icon">📚</span><span>책목록</span></button>
+  <button class="nav-item" data-screen="stats"><span class="nav-icon">📊</span><span>통계</span></button>
+  <button class="nav-item" data-screen="settings"><span class="nav-icon">⚙️</span><span>설정</span></button>
+</nav>
+
+<!-- ========== 공통: 토스트 / 확인창 / 입력창 ========== -->
+<div id="toast" class="toast hidden" role="status"></div>
+
+<div id="confirm-overlay" class="overlay hidden">
+  <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="confirm-msg">
+    <p id="confirm-msg">확인하시겠습니까?</p>
+    <div class="modal-btns">
+      <button class="ghost-btn" id="confirm-cancel">취소</button>
+      <button class="danger-btn" id="confirm-ok">확인</button>
+    </div>
+  </div>
+</div>
+
+<div id="prompt-overlay" class="overlay hidden">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="prompt-title">
+    <p id="prompt-title">입력</p>
+    <textarea id="prompt-input" rows="4"></textarea>
+    <div class="modal-btns">
+      <button class="ghost-btn" id="prompt-cancel">취소</button>
+      <button class="primary-btn" id="prompt-ok">저장</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
